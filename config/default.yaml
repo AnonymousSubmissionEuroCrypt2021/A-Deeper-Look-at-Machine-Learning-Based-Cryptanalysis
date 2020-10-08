@@ -1,0 +1,156 @@
+general:
+  seed: 0
+  device: 0
+  logs_tensorboard: ./results/test_v2/
+  models_path: ./results/models_trained/
+  models_path_load: ./results/models_trained/
+  cipher: speck # speck, simon, aes228, aes224, gimli, simeck
+  nombre_round_eval: 5
+  inputs_type: [ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[c0r^c1r, c0l^c1l, t0^t1]
+  #[ctdata0l^ctdata1l, DV, V0, V1]
+  #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[ctdata0l, ctdata0r, ctdata1l, ctdata1r]
+  #[ctdata0l^ctdata1l, inv(DeltaV), inv(V0)&inv(V1), inv(V0)&V1, inv(DeltaL)] #
+  word_size: 16
+  alpha: 7
+  beta: 2
+  type_create_data: normal # real_difference
+
+
+train_nn:
+  diff: (0x0040, 0x0000)
+  #(0, 0x0040) SIMON
+  #SPECK
+  # roun0
+  #(0x0040, 0x0000)
+  # roun1
+  #(0x8000, 0x8000)
+  # roun2
+  #(0x8100, 0x8102)
+  #(0x8300, 0x8302)
+  #(0x8700, 0x8702)
+  #(0x8f00, 0x8f02)
+  #(0x9f00, 0x9f02)
+  #(0xbf00, 0xbf02)
+  #(0xff00, 0xff02)
+  #(0x7f00, 0x7f02)
+  retain_model_gohr_ref: No    # Retrain le model de Gohr or load
+  finetunning: No
+  model_finetunne: baseline
+  load_special: No
+  load_nn_path: ./results/0.834308_bestacc_saimon_8rounds.pth
+  #./results/0.781695_bestacc.pth
+  #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_06_26_10_05_58_795239/0.926954_bestacc.pth
+  #./results/0.872292_bestacc.pth
+  # ./results/models_trained/speck/6/ctdata0l^ctdata1l_DL_V0_V1/Gohr_baseline_best_nbre_sampletrain_10000.pth
+  #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_06_26_10_05_58_795239/0.926954_bestacc.pth
+  #./results/0.920062_bestacc.pth
+  #./results/0.925608_bestacc.pth
+  #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_07_01_01_52_17_577674/0.918551_bestacc.pth
+  #./results/0.925608_bestacc.pth
+  #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_07_01_01_52_17_577674/0.918551_bestacc.pth
+  #./results/0.993328_bestacc.pth
+  #./results/0.925608_bestacc.pth
+  # results/0.781974_bestacc.pth #
+  countinuous_learning: No
+  curriculum_learning: No
+  nbre_epoch_per_stage: 3
+  type_model: baseline        # baseline, cnn_attention, multihead, deepset, baseline_bin, baseline_bin_v2, baseline_bin_v3, baseline_bin_v4, BagNet
+  a_bit: 1
+  nbre_sample_train: 10000000
+  nbre_sample_eval: 1000000
+  num_epochs: 10
+  batch_size: 500
+  loss_type: MSE #BCE - MSE -  SmoothL1Loss CrossEntropyLoss  F1
+  lr_nn: 0.0001
+  weight_decay_nn: 0.00001
+  momentum_nn: 0.9 #only for SGD
+  optimizer_type: Adam #Adam - AdamW - SGD
+  scheduler_type: CyclicLR #CyclicLR - None
+  base_lr:  0.0001      #Only if CyclicLR
+  max_lr: 0.002       #Only if CyclicLR
+  demicycle_1: 6  #Only if CyclicLR
+  numLayers: 10
+  limit: 2 #1 - 2 - 3
+  kstime: 16  #9 - 12 - 15
+  out_channel0: 32 #32 #120
+  out_channel1: 32 #32 #120
+  hidden1: 64 #64
+  hidden2: 64 #64
+  kernel_size0: 1
+  kernel_size1: 3
+  num_workers: 4
+  clip_grad_norm: 0.6
+  end_after_training: No
+  make_data_equilibre_3class: No
+  make_data_Nbatch: No
+  Nbatch: 1
+  make_data_equilibre_8class: Yes
+
+
+getting_masks:
+  load_masks: Yes
+  file_mask: results/masks_ref/speck/masks_inter_round.txt
+  #results/masks_ref/speck/6/masks_QQ/masks_126.txt
+  #results/masks_ref/speck/masks_inter_round.txt
+  nbre_max_masks_load: -1
+  research_new_masks: Yes
+  nbre_generate_data_train_val: 1000000
+  nbre_necessaire_val_SV: 5000
+  nbre_max_batch: 2
+  liste_segmentation_prediction: ["1, 0.9", "0.9, 0.5", "1, 0.8", "1, 0.5"]
+  liste_methode_extraction: [DeepLift, GradientShap, FeatureAblation, Saliency] #
+  #[IntegratedGradients, IntegratedGradients_tunnel, DeepLift, GradientShap, FeatureAblation, Saliency, ShapleyValueSampling, Occlusion]
+  #temps get_mask IntegratedGradients 0.6 for 100 samples
+  #temps get_mask IntegratedGradients_tunnel 3.7 for 100 samples NE PAS PRENDRE
+  #temps get_mask DeepLift 0.02 for 100 samples
+  #temps get_mask GradientShap 0.04 for 100 samples
+  #temps get_mask FeatureAblation 0.2 for 100 samples
+  #temps get_mask Saliency 0.03 for 100 samples
+  #temps get_mask ShapleyValueSampling 4 for 100 samples
+  #temps get_mask Occlusion 0.15 for 100 samples
+  liste_methode_selection: [abs_sum, abs_median, abs_mean]
+  #[PCA, sum, abs_sum, median, abs_median, mean, abs_mean]
+  hamming_weigth: [16, 18]
+  thr_value: []
+  save_fig_plot_feature_before_mask: No
+  end_after_step2: No
+
+
+make_ToT:
+  create_new_data_for_ToT: Yes
+  create_ToT_with_only_sample_from_cipher: Yes
+  nbre_sample_create_ToT: 20000000
+
+make_data_classifier:
+  create_new_data_for_classifier: Yes
+  nbre_sample_train_classifier: 1000000
+  nbre_sample_val_classifier: 100000
+
+compare_classifer:
+  eval_nn_ref: Yes
+  retrain_nn_ref: No
+  save_data_proba: No
+  num_epch_2: 5
+  batch_size_2: 500
+  classifiers_ours: [LGBM] # [NN, LGBM, RF]
+  num_epch_our: 20
+  batch_size_our: 500
+  retrain_with_import_features: Yes
+  keep_number_most_impactfull: 50
+  quality_of_masks: No
+  compute_independance_feature: No
+  alpha_test: 0.05
+  end_after_step4: Yes
+
+
+prunning:
+  inputs_type_prunning: [ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  model_to_prune: ./results/results_binary_922/0.920842_bestacc.pth
+  values_prunning: [0.8]
+  layers_NOT_to_prune: [quantize_fn, act_q, fc4, BN8, fc5, BN9]
+  save_model_prune: No
+  logs_layers: Yes
+  nbre_sample_eval_prunning: 10000
