@@ -23,9 +23,7 @@ import torch.nn.utils.prune as prune
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # initiate the parser
 
-print("TODO: MULTITHREADING + ASSERT PATH EXIST DEPEND ON CONDITION + save DDT + deleate some dataset")
-
-config = Config()
+config = Config("./config_reproduction_speck_averaging_batches/")
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[i for i in range(100)])

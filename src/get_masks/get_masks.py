@@ -8,7 +8,7 @@ from captum.attr import Saliency, ShapleyValueSampling
 from captum.attr import IntegratedGradients, DeepLift, GradientShap, NoiseTunnel, FeatureAblation, Occlusion
 import torch
 from sklearn.decomposition import PCA
-
+from tqdm import tqdm
 
 
 class Get_masks:
@@ -40,15 +40,15 @@ class Get_masks:
     def start_step(self):
         self.create_data()
         self.cpt = 0
-        for data_t, data_v in zip(self.dataloader_train, self.dataloader_val):
+        for data_t, data_v in tqdm(zip(self.dataloader_train, self.dataloader_val)):
             if self.cpt < self.args.nbre_max_batch:
                 self.cpt+=1
                 interet_1, out_net_val, inputs_t, inputs_v, labels_v = self.eval_data(data_t, data_v)
                 for (valmax, valimin) in self.liste_max_min2:
                     self.valmax_mnt = valmax
                     self.valimin_mnt = valimin
-                    print("Start segment: ", (valmax, valimin), " --- Nbre de masks: ", len(self.masks[0]))
-                    print()
+                    #print("Start segment: ", (valmax, valimin), " --- Nbre de masks: ", len(self.masks[0]))
+                    #print()
                     dico_res_dico = {}
                     data_X_bin, data_Y, nbre_iter_max = self.get_data_interest_segmentation(valmax, valimin, out_net_val, interet_1, inputs_v, labels_v)
                     dico_res_dico["binary"] = data_X_bin
@@ -61,7 +61,9 @@ class Get_masks:
                             dico_res_dico = self.update_Xmasks(index_interet_v, dico_res_dico, offeset, inputs_t)
 
                     self.apply_selection(dico_res_dico)
-
+        print()
+        print("--- Number of masks: ", len(self.masks[0]))
+        print()
 
 
 
@@ -69,14 +71,14 @@ class Get_masks:
         dl = DeepLift(self.net)
         start = time.time()
         dl_attr_test = dl.attribute(X_test.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return dl_attr_test.detach().cpu().numpy()
 
     def extract_IG(self, X_test, steps=50):
         ig = IntegratedGradients(self.net)
         start = time.time()
         ig_attr_test = ig.attribute(X_test.to(self.device), n_steps=steps)
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return ig_attr_test.detach().cpu().numpy()
 
 
@@ -123,7 +125,7 @@ class Get_masks:
 
 
     def update_Xmasks(self, index_interet_v, dico_res_dico, offeset, inputs_t):
-        print(index_interet_v.shape)
+        #print(index_interet_v.shape)
         for methode_extraction in self.args.liste_methode_extraction:
             if methode_extraction == "IntegratedGradients":
                 res = self.extract_IG(index_interet_v)
@@ -153,7 +155,7 @@ class Get_masks:
         ig_nt = NoiseTunnel(ig)
         start = time.time()
         ig_nt_attr_test = ig_nt.attribute(X_test.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return ig_nt_attr_test.detach().cpu().numpy()
 
 
@@ -161,7 +163,7 @@ class Get_masks:
         gs = GradientShap(self.net)
         start = time.time()
         gs_attr_test = gs.attribute(X_test.to(self.device), X_train.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return gs_attr_test.detach().cpu().numpy()
 
 
@@ -169,21 +171,21 @@ class Get_masks:
         fa = FeatureAblation(self.net)
         start = time.time()
         fa_attr_test = fa.attribute(X_test.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return fa_attr_test.detach().cpu().numpy()
 
     def extract_Sa(self, X_test):
         saliency = Saliency(self.net)
         start = time.time()
         saliency_attr_test = saliency.attribute(X_test.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return saliency_attr_test.detach().cpu().numpy()
 
     def extract_SV(self, X_test):
         Sv = ShapleyValueSampling(self.net)
         start = time.time()
         sv_attr_test = Sv.attribute(X_test.to(self.device))
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return sv_attr_test.detach().cpu().numpy()
 
 
@@ -191,7 +193,7 @@ class Get_masks:
         oc = Occlusion(self.net)
         start = time.time()
         oc_attr_test = oc.attribute(X_test.to(self.device), sliding_window_shapes=sliding_window)
-        print("temps train", time.time() - start)
+        #print("temps train", time.time() - start)
         return oc_attr_test.detach().cpu().numpy()
 
     def apply_selection(self, dico_res_dico):

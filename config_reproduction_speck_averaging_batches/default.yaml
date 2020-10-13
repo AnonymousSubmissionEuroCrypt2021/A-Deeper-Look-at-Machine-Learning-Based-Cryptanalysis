@@ -5,8 +5,10 @@ general:
   models_path: ./results/models_trained/
   models_path_load: ./results/models_trained/
   cipher: speck # speck, simon, aes228, aes224, gimli, simeck
-  nombre_round_eval: 6
+  nombre_round_eval: 5
   inputs_type: [ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[c0r^c1r, c0l^c1l, t0^t1]
   #[ctdata0l^ctdata1l, DV, V0, V1]
   #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
   #[ctdata0l, ctdata0r, ctdata1l, ctdata1r]
@@ -38,7 +40,8 @@ train_nn:
   finetunning: No
   model_finetunne: baseline
   load_special: No
-  load_nn_path: ./results/0.781695_bestacc.pth
+  load_nn_path: ./speck_5round_ND_model.pth
+  #./results/simon_8round_ND_model.pth
   #./results/0.781695_bestacc.pth
   #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_06_26_10_05_58_795239/0.926954_bestacc.pth
   #./results/0.872292_bestacc.pth
@@ -58,9 +61,9 @@ train_nn:
   type_model: baseline        # baseline, cnn_attention, multihead, deepset, baseline_bin, baseline_bin_v2, baseline_bin_v3, baseline_bin_v4, BagNet
   a_bit: 1
   nbre_sample_train: 10000000
-  nbre_sample_eval: 1000000
-  num_epochs: 1
-  batch_size: 5000
+  nbre_sample_eval: 100000
+  num_epochs: 10
+  batch_size: 500
   loss_type: MSE #BCE - MSE -  SmoothL1Loss CrossEntropyLoss  F1
   lr_nn: 0.0001
   weight_decay_nn: 0.00001
@@ -81,10 +84,10 @@ train_nn:
   kernel_size1: 3
   num_workers: 4
   clip_grad_norm: 0.6
-  end_after_training: No
+  end_after_training: Yes
   make_data_equilibre_3class: No
   make_data_Nbatch: No
-  Nbatch: 100
+  Nbatch: 1
   make_data_equilibre_8class: Yes
 
 
@@ -95,7 +98,7 @@ getting_masks:
   #results/masks_ref/speck/masks_inter_round.txt
   nbre_max_masks_load: -1
   research_new_masks: Yes
-  nbre_generate_data_train_val: 10000
+  nbre_generate_data_train_val: 1000000
   nbre_necessaire_val_SV: 5000
   nbre_max_batch: 2
   liste_segmentation_prediction: ["1, 0.9", "0.9, 0.5", "1, 0.8", "1, 0.5"]
@@ -111,7 +114,7 @@ getting_masks:
   #temps get_mask Occlusion 0.15 for 100 samples
   liste_methode_selection: [abs_sum, abs_median, abs_mean]
   #[PCA, sum, abs_sum, median, abs_median, mean, abs_mean]
-  hamming_weigth: [16, 18, 20]
+  hamming_weigth: [16, 18]
   thr_value: []
   save_fig_plot_feature_before_mask: No
   end_after_step2: No
@@ -133,11 +136,11 @@ compare_classifer:
   save_data_proba: No
   num_epch_2: 5
   batch_size_2: 500
-  classifiers_ours: [LGBM] # [LR, LGBM, RF, NN]
+  classifiers_ours: [LGBM] # [NN, LGBM, RF]
   num_epch_our: 20
   batch_size_our: 500
-  retrain_with_import_features: No
-  keep_number_most_impactfull: 40
+  retrain_with_import_features: Yes
+  keep_number_most_impactfull: 50
   quality_of_masks: No
   compute_independance_feature: No
   alpha_test: 0.05
@@ -150,5 +153,5 @@ prunning:
   values_prunning: [0.8]
   layers_NOT_to_prune: [quantize_fn, act_q, fc4, BN8, fc5, BN9]
   save_model_prune: No
-  logs_layers: Yes
+  logs_layers: No
   nbre_sample_eval_prunning: 10000

@@ -186,7 +186,7 @@ class NN_Model_Ref:
         #    scheduler = OneCycleLR(optimizer_conv, max_lr=max_lr, total_steps=step_size_up)
 
 
-    def eval_all(self, val_phase = ["train", "val"], intermed = None):
+    def eval_all(self, val_phase = ["train", "val"]):
         print("EVALUATE MODEL NNGOHR ON THIS DATASET ON TRAIN AND VAL")
         print()
         data_train = DataLoader_cipher_binary(self.X_train_nn_binaire, self.Y_train_nn_binaire, self.device)
@@ -200,7 +200,7 @@ class NN_Model_Ref:
         else:
             self.dataloaders = {'val': dataloader_val}
         self.load_general_train()
-        self.eval(val_phase, intermediate=intermed)
+        self.eval(val_phase)
 
 
     def train(self, name_input):
@@ -305,21 +305,14 @@ class NN_Model_Ref:
 
 
 
-    def eval(self, val_phase = ['train', 'val'], intermediate=None):
+    def eval(self, val_phase = ['train', 'val']):
         since = time.time()
         n_batches = self.batch_size
         pourcentage = 3
         #phase = "val"
         #self.intermediaires = {x:[] for x in val_phase }
-        if intermediate is not None:
-            if intermediate == "512":
-                data_train = np.zeros((len(self.X_train_nn_binaire), 512),  dtype = np.float16)#16*self.args.out_channel1),  dtype = np.uint8)
-                data_val = np.zeros((len(self.X_val_nn_binaire), 512),  dtype = np.float16)#16*self.args.out_channel1), dtype = np.uint8)
-            elif intermediate=="64":
-                data_train = np.zeros((len(self.X_train_nn_binaire), 512),
-                                      dtype=np.float16)  # 16*self.args.out_channel1),  dtype = np.uint8)
-                data_val = np.zeros((len(self.X_val_nn_binaire), 512),
-                                    dtype=np.float16)  # 16*self.args.out_channel1), dtype = np.uint8)
+        #data_train = np.zeros((len(self.X_train_nn_binaire), 512),  dtype = np.float16)#16*self.args.out_channel1),  dtype = np.uint8)
+        #data_val = np.zeros((len(self.X_val_nn_binaire), 512),  dtype = np.float16)#16*self.args.out_channel1), dtype = np.uint8)
         #x = self.net.intermediare.detach().cpu().numpy().astype(np.uint8)
         #data_train = np.zeros_like(x, dtype = np.uint8)
         #data_val = np.zeros_like(x, dtype = np.uint8)
@@ -338,16 +331,12 @@ class NN_Model_Ref:
             for i, data in enumerate(tk0):
                 inputs, labels = data
                 outputs = self.net(inputs.to(self.device))
-                if intermediate is not None:
-                    if intermediate == "512":
-                        data_ici = self.net.intermediare0.detach().cpu().numpy().astype(np.float16)
-                    elif intermediate == "64":
-                        data_ici = self.net.intermediare0.detach().cpu().numpy().astype(np.float16)
-                    if phase == "train":
-                        data_train[i*self.batch_size:(i+1)*self.batch_size,:] = data_ici
-                    else:
-                        data_val[i*self.batch_size:(i+1)*self.batch_size,:] = data_ici
-                    del data_ici
+                data_ici = self.net.intermediare0.detach().cpu().numpy().astype(np.float16)
+                #if phase == "train":
+                    #data_train[i*self.batch_size:(i+1)*self.batch_size,:] = data_ici
+                #else:
+                    #data_val[i*self.batch_size:(i+1)*self.batch_size,:] = data_ici
+                del data_ici
 
                 #self.intermediaires[phase].append(self.net.intermediare.detach().cpu().numpy().astype(np.uint8))
                 self.outputs_proba[phase][i*self.batch_size:(i+1)*self.batch_size,:] = outputs.detach().cpu().numpy().astype(np.float16)
@@ -382,28 +371,23 @@ class NN_Model_Ref:
             print()
             num1 = int(self.args.nbre_sample_train_classifier/self.batch_size)
             num2 = int(self.args.nbre_sample_val_classifier / self.batch_size)
-
-            if intermediate is not None:
-                if phase == "train":
-                    self.all_intermediaire = data_train
-                else:
-                    self.all_intermediaire_val = data_val
             if phase == "train":
                 #scaler1 = StandardScaler()
                 #del self.dataloaders["train"]
                 #data = data_train #np.array(self.intermediaires[phase]).astype(np.uint8).reshape(num1 * self.batch_size, -1)
                 #data2 = scaler1.fit_transform(data)
-
+                #self.all_intermediaire = data_train
                 self.outputs_proba_train = np.array(self.outputs_proba[phase]).astype(np.float16)#.reshape(num1 * self.batch_size, -1)
                 self.outputs_pred_train = np.array(self.outputs_pred[phase]).astype(np.float16)#.reshape(num1 * self.batch_size, -1)
                 #if not self.args.retrain_nn_ref:
                     #del self.all_intermediaire, data_train
 
+            else:
                 #scaler2 = StandardScaler()
                 #data = data_val
                 #data = np.array(self.intermediaires[phase]).astype(np.uint8).reshape(num1 * self.batch_size, -1)
                 #data2 = scaler2.fit_transform(data)
-
+                #self.all_intermediaire_val = data_val
                 self.outputs_proba_val = np.array(self.outputs_proba[phase]).astype(np.float16)#.reshape(num2 * self.batch_size, -1)
                 self.outputs_pred_val = np.array(self.outputs_pred[phase]).astype(np.float16)#.reshape(num2 * self.batch_size, -1)
                 #    num2 * self.batch_size, -1)

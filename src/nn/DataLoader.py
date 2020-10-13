@@ -33,7 +33,7 @@ class DataLoader_cipher_binaryNbatch(Dataset):
                 Xfinal = Xfinal.reshape(-1, len(args.inputs_type), args.word_size, 1)
                 Xfinal2 = np.concatenate((Xfinal2, Xfinal), axis=3)
         self.X, self.Y = Xfinal2, Y
-        print(self.X.shape)
+        #print(self.X.shape)
 
         self.device = device
 

@@ -12,13 +12,13 @@ from src.data_cipher.create_data import Create_data_binary
 from src.utils.initialisation_run import init_all_for_run, init_cipher
 from src.utils.config import Config
 import argparse
-from src.utils.utils import str2bool, two_args_str_int, two_args_str_float, str2list, transform_input_type, str2hexa
+from src.utils.utils import str2bool, two_args_str_int, two_args_str_float, str2list, transform_input_type, str2hexa, \
+    transform_input_type2
 import numpy as np
 import pandas as pd
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # initiate the parser
 
-print("TODO: MULTITHREADING + ASSERT PATH EXIST DEPEND ON CONDITION + save DDT + deleate some dataset")
 
 config = Config()
 parser = argparse.ArgumentParser()
@@ -84,7 +84,7 @@ parser.add_argument("--nbre_max_batch", default=config.getting_masks.nbre_max_ba
 parser.add_argument("--liste_segmentation_prediction", default=config.getting_masks.liste_segmentation_prediction)
 parser.add_argument("--liste_methode_extraction", default=config.getting_masks.liste_methode_extraction, type=transform_input_type)
 parser.add_argument("--liste_methode_selection", default=config.getting_masks.liste_methode_selection, type=transform_input_type)
-parser.add_argument("--hamming_weigth", default=config.getting_masks.hamming_weigth, type=str2list)
+parser.add_argument("--hamming_weigth", default=config.getting_masks.hamming_weigth, type=transform_input_type2)
 parser.add_argument("--thr_value", default=config.getting_masks.thr_value, type=str2list)
 parser.add_argument("--research_new_masks", default=config.getting_masks.research_new_masks, type=str2bool)
 parser.add_argument("--save_fig_plot_feature_before_mask", default=config.getting_masks.save_fig_plot_feature_before_mask, type=str2bool)
@@ -201,7 +201,7 @@ if args.end_after_step2:
     sys.exit(1)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 3 : MAKE TABLE OF TRUTH")
+print("STEP 3 : MAKE M-ODT")
 print()
 print("NEW DATA: "+ str(args.create_new_data_for_ToT) +  " | PURE ToT: " +  str(args.create_ToT_with_only_sample_from_cipher) )
 print()

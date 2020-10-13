@@ -179,7 +179,7 @@ class Create_data_binary:
                 Xfinal = np.concatenate((Xfinal, X), axis=1)
 
 
-        print(Xfinal.shape)
+        #print(Xfinal.shape)
         return (Xfinal, Y, ctdata0l, ctdata0r, ctdata1l, ctdata1r);
 
 

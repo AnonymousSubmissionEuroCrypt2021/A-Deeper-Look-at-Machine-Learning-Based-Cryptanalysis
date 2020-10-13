@@ -4,9 +4,11 @@ general:
   logs_tensorboard: ./results/test_v2/
   models_path: ./results/models_trained/
   models_path_load: ./results/models_trained/
-  cipher: speck # speck, simon, aes228, aes224, gimli, simeck
-  nombre_round_eval: 5
-  inputs_type: [ctdata0l, ctdata0r, ctdata1l, ctdata1r]
+  cipher: simon # speck, simon, aes228, aes224, gimli, simeck
+  nombre_round_eval: 8
+  inputs_type: [c0r^c1r, c0l^c1l, t0^t1]
+  #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
+  #[c0r^c1r, c0l^c1l, t0^t1]
   #[ctdata0l^ctdata1l, DV, V0, V1]
   #[ctdata0l^ctdata1l, ctdata0r^ctdata1r^ctdata0l^ctdata1l, ctdata0l^ctdata0r, ctdata1l^ctdata1r]
   #[ctdata0l, ctdata0r, ctdata1l, ctdata1r]
@@ -18,7 +20,7 @@ general:
 
 
 train_nn:
-  diff: (0x0040, 0x0000)
+  diff: (0, 0x0040)
   #(0, 0x0040) SIMON
   #SPECK
   # roun0
@@ -37,8 +39,9 @@ train_nn:
   retain_model_gohr_ref: No    # Retrain le model de Gohr or load
   finetunning: No
   model_finetunne: baseline
-  load_special: No
-  load_nn_path: ./results/0.781695_bestacc.pth
+  load_special: Yes
+  load_nn_path: ./simon_8round_ND_model.pth
+  #./results/simon_8round_ND_model.pth
   #./results/0.781695_bestacc.pth
   #./results/test_v2/speck/5/ctdata0l^ctdata1l_DV_V0_V1/2020_06_26_10_05_58_795239/0.926954_bestacc.pth
   #./results/0.872292_bestacc.pth
@@ -57,9 +60,9 @@ train_nn:
   nbre_epoch_per_stage: 3
   type_model: baseline        # baseline, cnn_attention, multihead, deepset, baseline_bin, baseline_bin_v2, baseline_bin_v3, baseline_bin_v4, BagNet
   a_bit: 1
-  nbre_sample_train: 1000000
-  nbre_sample_eval: 100000
-  num_epochs: 1
+  nbre_sample_train: 1000
+  nbre_sample_eval: 10000
+  num_epochs: 10
   batch_size: 500
   loss_type: MSE #BCE - MSE -  SmoothL1Loss CrossEntropyLoss  F1
   lr_nn: 0.0001
@@ -84,12 +87,12 @@ train_nn:
   end_after_training: No
   make_data_equilibre_3class: No
   make_data_Nbatch: No
-  Nbatch: 100
+  Nbatch: 1
   make_data_equilibre_8class: Yes
 
 
 getting_masks:
-  load_masks: Yes
+  load_masks: No
   file_mask: results/masks_ref/speck/masks_inter_round.txt
   #results/masks_ref/speck/6/masks_QQ/masks_126.txt
   #results/masks_ref/speck/masks_inter_round.txt
@@ -109,9 +112,9 @@ getting_masks:
   #temps get_mask Saliency 0.03 for 100 samples
   #temps get_mask ShapleyValueSampling 4 for 100 samples
   #temps get_mask Occlusion 0.15 for 100 samples
-  liste_methode_selection: [PCA, abs_sum, abs_median, abs_mean]
+  liste_methode_selection: [abs_sum, abs_median, abs_mean]
   #[PCA, sum, abs_sum, median, abs_median, mean, abs_mean]
-  hamming_weigth: [16, 18]
+  hamming_weigth: [16, 18, 20]
   thr_value: []
   save_fig_plot_feature_before_mask: No
   end_after_step2: No
@@ -128,12 +131,12 @@ make_data_classifier:
   nbre_sample_val_classifier: 100000
 
 compare_classifer:
-  eval_nn_ref: No
+  eval_nn_ref: Yes
   retrain_nn_ref: No
   save_data_proba: No
   num_epch_2: 5
   batch_size_2: 500
-  classifiers_ours: [LGBM, RF, LR] # [NN, LGBM, RF]
+  classifiers_ours: [LGBM] # [NN, LGBM, RF]
   num_epch_our: 20
   batch_size_our: 500
   retrain_with_import_features: No

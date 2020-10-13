@@ -5,3 +5,4 @@ sparse_vector
 tqdm
 pandas
 lightgbm
+numpy

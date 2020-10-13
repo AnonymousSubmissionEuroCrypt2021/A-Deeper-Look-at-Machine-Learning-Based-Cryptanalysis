@@ -5,6 +5,8 @@ import json
 import datetime
 import numpy as np
 from pathlib import Path
+
+from src.data_cipher.cipher_simeck import Cipher_Simeck
 from src.data_cipher.cipher_simon import Cipher_Simon
 from src.data_cipher.cipher_speck import Cipher_Speck
 
@@ -50,6 +52,8 @@ def init_cipher(args):
         cipher = Cipher_Speck(args)
     if args.cipher == "simon":
         cipher = Cipher_Simon(args)
+    if args.cipher == "simeck":
+        cipher = Cipher_Simeck(args)
     if args.cipher == "aes228":
         cipher = Cipher_aes_228(args)
     if args.cipher == "aes224":

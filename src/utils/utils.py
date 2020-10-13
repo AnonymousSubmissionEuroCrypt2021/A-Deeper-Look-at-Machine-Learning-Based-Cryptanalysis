@@ -51,6 +51,14 @@ def transform_input_type(x):
         x = inputs_type1
     return x
 
+def transform_input_type2(x):
+    if "[" in x:
+        inputs_type2 = x.replace("[", "").replace("]", "")
+        inputs_type1 = inputs_type2.split(", ")
+        x = inputs_type1
+        x2 = [int(y) for y in x]
+    return x2
+
 
 class F1_Loss(nn.Module):
     '''Calculate F1 score. Can work with gpu tensors

@@ -170,8 +170,8 @@ class All_classifier:
 
 
         final_model = lgb.LGBMClassifier(**best_params_, random_state=self.args.seed)
-        cv_score_best = cross_val_score(final_model, X_DDTpd, self.Y_train_proba, cv=5, verbose=6)
-        print(cv_score_best.mean(), cv_score_best.std())
+        #cv_score_best = cross_val_score(final_model, X_DDTpd, self.Y_train_proba, cv=5, verbose=6)
+        #print(cv_score_best.mean(), cv_score_best.std())
 
 
 
@@ -187,25 +187,36 @@ class All_classifier:
         #print(self.nn_model_ref.outputs_pred_val[:,0].shape, y_pred.shape)
         #print(self.nn_model_ref.outputs_pred_val[:,0], y_pred)
 
+        print()
+        self.save_logs(self.path_save_model + "logs_lgbm_" + str(len(features)) + ".txt", y_pred, self.Y_eval_proba)
+        print()
+
         same_output = self.nn_model_ref.outputs_pred_val[:,0] == y_pred
 
         #print(same_output)
 
+
+
         p2 = 100 * np.sum(same_output) / len(same_output)
-        print("Proportion des prediction identiques: " + str(p2))
+        print()
+        print()
+        print("MATCHING PROPORTION: " + str(p2)+ " %")
 
 
 
         index_interext = np.logical_and(same_output, self.Y_eval_proba == y_pred)
         p22 = 100 * np.sum(index_interext) / len(index_interext)
-        print("Proportion des prediction identiques et egal au label: " + str(p22))
-        #print(ok)
+        print("MATCHING PROPORTION AND EQUAL TO LABEL: " + str(p22)+ " %")
+        print()
         cm = confusion_matrix(y_pred=y_pred, y_true=self.Y_eval_proba, normalize="true")
-        res = np.array([accuracy_score(self.Y_eval_proba, y_pred), cm[0][0], cm[1][1], p2, p22])
-        print(res)
+        res = np.array([accuracy_score(self.Y_eval_proba, y_pred), cm[0][0], cm[1][1], p2/100, p22/100])
+        print()
+
+        print("SUMMARY: [Acc, TPR, TNR, Matching, Matching +label] - ", res)
+        print()
         np.save(self.path_save_model + "res_" + str(self.cpt) + ".npy",res )
 
-        self.save_logs(self.path_save_model + "logs_lgbm_"+str(len(features))+".txt", y_pred, self.Y_eval_proba)
+
         lgb.create_tree_digraph(final_model).save(directory=self.path_save_model, filename="tree_LGBM_nbrefeat_"+str(len(features))+".dot")
         os.system("dot -Tpng " + self.path_save_model + "tree_LGBM_nbrefeat_"+str(len(features))+".dot > " + self.path_save_model + "tree_LGBM_nbrefeat_"+str(len(features))+".png")
         del X_DDTpd

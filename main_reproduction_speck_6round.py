@@ -18,9 +18,7 @@ import pandas as pd
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # initiate the parser
 
-print("TODO: MULTITHREADING + ASSERT PATH EXIST DEPEND ON CONDITION + save DDT + deleate some dataset")
-
-config = Config(path="config_reproduction_4/")
+config = Config("./config_reproduction_speck_6round/")
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[i for i in range(100)])
@@ -128,127 +126,117 @@ writer, device, rng, path_save_model, path_save_model_train, name_input = init_a
 print("LOAD CIPHER")
 print()
 cipher = init_cipher(args)
-creator_data_binary = Create_data_binary(args, cipher, rng)
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("---" * 100)
-print("STEP 1 : LOAD/ TRAIN NN REF")
-print()
-print("COUNTINUOUS LEARNING: "+ str(args.countinuous_learning) +  " | CURRICULUM LEARNING: " +  str(args.curriculum_learning) + " | MODEL: " + str(args.type_model))
-print()
-
-"""nombre_round_eval = args.nombre_round_eval
-args.nombre_round_eval = nombre_round_eval - 2
-nn_model_ref2 = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
-nn_model_ref2.epochs = 10
-nn_model_ref2.train_general(name_input)
-args.nombre_round_eval = nombre_round_eval - 1
-nn_model_ref3 = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
-nn_model_ref3.epochs = 10
-nn_model_ref3.net = nn_model_ref2.net
-nn_model_ref3.train_general(name_input)
-args.nombre_round_eval = nombre_round_eval
-nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
-nn_model_ref.net = nn_model_ref3.net"""
-
-nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
 
 
-if args.retain_model_gohr_ref:
-    nn_model_ref.train_general(name_input)
-else:
-    #nn_model_ref.load_nn()
-    try:
-        if args.finetunning:
-            nn_model_ref.load_nn()
-            nn_model_ref.train_from_scractch(name_input + "fine-tune")
-        #nn_model_ref.eval(["val"])
-        else:
-            nn_model_ref.load_nn()
-    except:
-        print("ERROR")
-        print("NO MODEL AVALAIBLE FOR THIS CONFIG")
-        print("CHANGE ARGUMENT retain_model_gohr_ref")
+cpt = 0
+
+
+for seed in range(3):
+    args.seed = seed
+    creator_data_binary = Create_data_binary(args, cipher, rng)
+    for repeat in range(5):
+        cpt+=1
+        creator_data_binary = Create_data_binary(args, cipher, rng)
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("---" * 100)
+        print("STEP 1 : LOAD/ TRAIN NN REF")
         print()
-        sys.exit(1)
-
-if args.create_new_data_for_ToT and args.create_new_data_for_classifier:
-    del nn_model_ref.X_train_nn_binaire, nn_model_ref.X_val_nn_binaire, nn_model_ref.Y_train_nn_binaire, nn_model_ref.Y_val_nn_binaire
-    del nn_model_ref.c0l_train_nn, nn_model_ref.c0l_val_nn, nn_model_ref.c0r_train_nn, nn_model_ref.c0r_val_nn
-    del nn_model_ref.c1l_train_nn, nn_model_ref.c1l_val_nn, nn_model_ref.c1r_train_nn, nn_model_ref.c1r_val_nn
+        print("COUNTINUOUS LEARNING: "+ str(args.countinuous_learning) +  " | CURRICULUM LEARNING: " +  str(args.curriculum_learning) + " | MODEL: " + str(args.type_model))
+        print()
 
 
-print("STEP 1 : DONE")
-print("---" * 100)
-if args.end_after_training:
-    sys.exit(1)
-
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 2 : GET MASKS")
-print()
-print("LOAD MASKS: "+ str(args.load_masks) +  " | RESEARCH NEW: " +  str(args.research_new_masks) + " | MODEL: " + str(args.liste_segmentation_prediction) +" " + str(args.liste_methode_extraction)+" " + str(args.liste_methode_selection)+" " + str(args.hamming_weigth)+" " + str(args.thr_value))
-print()
-get_masks_gen = Get_masks(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device)
-if args.research_new_masks:
-    get_masks_gen.start_step()
-    get_masks_gen.save_masks(path_save_model)
-    del get_masks_gen.X_deltaout_train, get_masks_gen.X_eval, get_masks_gen.Y_tf, get_masks_gen.Y_eval
+        nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
 
 
-print("STEP 2 : DONE")
-print("---" * 100)
-if args.end_after_step2:
-    sys.exit(1)
+        if args.retain_model_gohr_ref:
+            nn_model_ref.train_general(name_input)
+        else:
+            #nn_model_ref.load_nn()
+            try:
+                if args.finetunning:
+                    nn_model_ref.load_nn()
+                    nn_model_ref.train_from_scractch(name_input + "fine-tune")
+                #nn_model_ref.eval(["val"])
+                else:
+                    nn_model_ref.load_nn()
+            except:
+                print("ERROR")
+                print("NO MODEL AVALAIBLE FOR THIS CONFIG")
+                print("CHANGE ARGUMENT retain_model_gohr_ref")
+                print()
+                sys.exit(1)
 
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 3 : MAKE TABLE OF TRUTH")
-print()
-print("NEW DATA: "+ str(args.create_new_data_for_ToT) +  " | PURE ToT: " +  str(args.create_ToT_with_only_sample_from_cipher) )
-print()
-
-table_of_truth = ToT(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
-table_of_truth.create_DDT()
-
-del table_of_truth.c0l_create_ToT, table_of_truth.c0r_create_ToT
-del table_of_truth.c1l_create_ToT, table_of_truth.c1r_create_ToT
-
-print("STEP 3 : DONE")
-print("---" * 100)
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 4 : CREATE DATA PROBA AND CLASSIFY")
-print()
-print("NEW DATA: "+ str(args.create_new_data_for_classifier))
-print()
-
-generator_data = Genrator_data_prob_classifier(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
-generator_data.create_data_g(table_of_truth)
-#EVALUATE GOHR NN ON NEW DATASET
-nn_model_ref.X_train_nn_binaire = generator_data.X_bin_train
-nn_model_ref.X_val_nn_binaire = generator_data.X_bin_val
-nn_model_ref.Y_train_nn_binaire = generator_data.Y_create_proba_train
-nn_model_ref.Y_val_nn_binaire = generator_data.Y_create_proba_val
-
-if args.eval_nn_ref:
-    nn_model_ref.eval_all(["train", "val"])
-all_clfs = All_classifier(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth)
-#all_clfs.X_train_proba = np.concatenate((all_clfs.X_train_proba, X_feat_temp), axis = 1)
-#all_clfs.X_eval_proba =  np.concatenate((all_clfs.X_eval_proba, X_feat_temp_val), axis = 1)
-all_clfs.classify_all()
-
-if args.quality_of_masks:
-    qm = Quality_masks(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth, all_clfs)
-    qm.start_all()
-else:
-    qm = None
+        if args.create_new_data_for_ToT and args.create_new_data_for_classifier:
+            del nn_model_ref.X_train_nn_binaire, nn_model_ref.X_val_nn_binaire, nn_model_ref.Y_train_nn_binaire, nn_model_ref.Y_val_nn_binaire
+            del nn_model_ref.c0l_train_nn, nn_model_ref.c0l_val_nn, nn_model_ref.c0r_train_nn, nn_model_ref.c0r_val_nn
+            del nn_model_ref.c1l_train_nn, nn_model_ref.c1l_val_nn, nn_model_ref.c1r_train_nn, nn_model_ref.c1r_val_nn
 
 
+        print("STEP 1 : DONE")
+        print("---" * 100)
+        if args.end_after_training:
+            sys.exit(1)
 
-print("STEP 4 : DONE")
-print("---" * 100)
-if args.end_after_step4:
-    sys.exit(1)
-#--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 5: START EVALUATE ClASSIFIERS")
-print()
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 2 : GET MASKS")
+        print()
+        print("LOAD MASKS: "+ str(args.load_masks) +  " | RESEARCH NEW: " +  str(args.research_new_masks) + " | MODEL: " + str(args.liste_segmentation_prediction) +" " + str(args.liste_methode_extraction)+" " + str(args.liste_methode_selection)+" " + str(args.hamming_weigth)+" " + str(args.thr_value))
+        print()
+        get_masks_gen = Get_masks(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device)
+        if args.research_new_masks:
+            get_masks_gen.start_step()
+            get_masks_gen.save_masks(path_save_model)
+            del get_masks_gen.X_deltaout_train, get_masks_gen.X_eval, get_masks_gen.Y_tf, get_masks_gen.Y_eval
 
-evaluate_all(all_clfs, generator_data, nn_model_ref, table_of_truth, qm, path_save_model)
+
+        print("STEP 2 : DONE")
+        print("---" * 100)
+        if args.end_after_step2:
+            sys.exit(1)
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 3 : MAKE M-ODT")
+        print()
+        print("NEW DATA: "+ str(args.create_new_data_for_ToT) +  " | PURE ToT: " +  str(args.create_ToT_with_only_sample_from_cipher) )
+        print()
+
+        table_of_truth = ToT(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
+        table_of_truth.create_DDT()
+
+        del table_of_truth.c0l_create_ToT, table_of_truth.c0r_create_ToT
+        del table_of_truth.c1l_create_ToT, table_of_truth.c1r_create_ToT
+
+        print("STEP 3 : DONE")
+        print("---" * 100)
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 4 : CREATE DATA PROBA AND CLASSIFY")
+        print()
+        print("NEW DATA: "+ str(args.create_new_data_for_classifier))
+        print()
+        generator_data = Genrator_data_prob_classifier(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
+        generator_data.create_data_g(table_of_truth)
+        args.inputs_type = ["ctdata0l", "ctdata0r", "ctdata1l", "ctdata1r"]
+        nn_model_ref.load_nn()
+        #EVALUATE GOHR NN ON NEW DATASET
+        liste_inputs = creator_data_binary.convert_data_inputs(args, generator_data.c0l_create_proba_train, generator_data.c0r_create_proba_train, generator_data.c1l_create_proba_train, generator_data.c1r_create_proba_train)
+        nn_model_ref.X_train_nn_binaire = creator_data_binary.convert_to_binary(liste_inputs);
+        liste_inputs = creator_data_binary.convert_data_inputs(args, generator_data.c0l_create_proba_val, generator_data.c0r_create_proba_val, generator_data.c1l_create_proba_val, generator_data.c1r_create_proba_val)
+        nn_model_ref.X_val_nn_binaire = creator_data_binary.convert_to_binary(liste_inputs);
+        nn_model_ref.Y_train_nn_binaire = generator_data.Y_create_proba_train
+        nn_model_ref.Y_val_nn_binaire = generator_data.Y_create_proba_val
+        if args.eval_nn_ref:
+            nn_model_ref.eval_all(["train", "val"])
+        all_clfs = All_classifier(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth, cpt)
+        #all_clfs.X_train_proba = np.concatenate((all_clfs.X_train_proba, X_feat_temp), axis = 1)
+        #all_clfs.X_eval_proba =  np.concatenate((all_clfs.X_eval_proba, X_feat_temp_val), axis = 1)
+        all_clfs.classify_all()
+
+        if args.quality_of_masks:
+            qm = Quality_masks(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth, all_clfs)
+            qm.start_all()
+        else:
+            qm = None
+
+        del all_clfs, nn_model_ref, creator_data_binary, generator_data, table_of_truth, get_masks_gen
+

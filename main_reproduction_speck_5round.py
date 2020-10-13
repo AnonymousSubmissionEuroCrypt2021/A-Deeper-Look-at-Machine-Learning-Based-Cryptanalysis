@@ -1,7 +1,12 @@
 import sys
 import warnings
 warnings.filterwarnings('ignore',category=FutureWarning)
-
+from collections import Counter
+from src.get_masks.evaluate_quality_masks import Quality_masks
+from src.classifiers.classifier_all import All_classifier, evaluate_all
+from src.ToT.table_of_truth import ToT
+from src.data_classifier.Generator_proba_classifier import Genrator_data_prob_classifier
+from src.get_masks.get_masks import Get_masks
 from src.nn.nn_model_ref import NN_Model_Ref
 from src.data_cipher.create_data import Create_data_binary
 from src.utils.initialisation_run import init_all_for_run, init_cipher
@@ -10,35 +15,10 @@ import argparse
 from src.utils.utils import str2bool, two_args_str_int, two_args_str_float, str2list, transform_input_type, str2hexa
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import cross_val_score, train_test_split
-from src.classifiers.nn_classifier_keras import train_speck_distinguisher
-from sklearn import linear_model
-from sklearn.ensemble import RandomForestClassifier
-import lightgbm as lgb
-from sklearn.tree import export_graphviz
-import os
-import pandas as pd
-import numpy as np
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix, accuracy_score
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score, train_test_split
-from sklearn.neural_network import MLPClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import SVC
-from sklearn.gaussian_process import GaussianProcessClassifier
-from sklearn.gaussian_process.kernels import RBF
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
-from sklearn.naive_bayes import GaussianNB
-from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # initiate the parser
 
-print("TODO: MULTITHREADING + ASSERT PATH EXIST DEPEND ON CONDITION + save DDT + deleate some dataset")
-
-config = Config(path="config_reproduction_2/")
+config = Config("./config_reproduction_speck_5round/")
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--seed", default=config.general.seed, type=two_args_str_int, choices=[i for i in range(100)])
@@ -147,95 +127,119 @@ print("LOAD CIPHER")
 print()
 cipher = init_cipher(args)
 
-res_svm_liner = []
-res_svm_rbf = []
-res_rf_liner = []
-res_mlp_rbf = []
-res_gohr_rbf = []
-res_lgbm_rbf = []
 
-nbre_sample_train = args.nbre_sample_train
-#print(args.nbre_sample_train)
-args.nbre_sample_train = 10000000
-#print(args.nbre_sample_train)
-creator_data_binary = Create_data_binary(args, cipher, rng)
-nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
-nn_model_ref.load_nn()
-net = nn_model_ref.net
-args.nbre_sample_train = nbre_sample_train
-del nn_model_ref, creator_data_binary
 cpt = 0
-for intermedvalue in ["64", "512"]:
-    for seed in range(3):
-        args.seed = seed
+
+
+for seed in range(3):
+    args.seed = seed
+    creator_data_binary = Create_data_binary(args, cipher, rng)
+    for repeat in range(5):
+        cpt+=1
         creator_data_binary = Create_data_binary(args, cipher, rng)
-        for repeat in range(5):
-            cpt += 1
-            nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
-            nn_model_ref.net = net
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("---" * 100)
+        print("STEP 1 : LOAD/ TRAIN NN REF")
+        print()
+        print("COUNTINUOUS LEARNING: "+ str(args.countinuous_learning) +  " | CURRICULUM LEARNING: " +  str(args.curriculum_learning) + " | MODEL: " + str(args.type_model))
+        print()
 
 
-            nn_model_ref.eval_all(["train", "val"], intermed=intermedvalue)
+        nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, creator_data_binary, path_save_model_train)
 
-            X_DDTpd = pd.DataFrame(data=nn_model_ref.all_intermediaire)
 
-            classifiers = [
-                #SVC(kernel="linear", C=0.025,random_state=args.seed),
-                #SVC(gamma=2, C=1,random_state=args.seed),
-                #RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1,random_state=args.seed),
-                #MLPClassifier(alpha=1, max_iter=1000,random_state=args.seed),
-                "LGBM"]
-            for clf in classifiers:
-                print("---------------------------"*10)
-                print(clf)
+        if args.retain_model_gohr_ref:
+            nn_model_ref.train_general(name_input)
+        else:
+            #nn_model_ref.load_nn()
+            try:
+                if args.finetunning:
+                    nn_model_ref.load_nn()
+                    nn_model_ref.train_from_scractch(name_input + "fine-tune")
+                #nn_model_ref.eval(["val"])
+                else:
+                    nn_model_ref.load_nn()
+            except:
+                print("ERROR")
+                print("NO MODEL AVALAIBLE FOR THIS CONFIG")
+                print("CHANGE ARGUMENT retain_model_gohr_ref")
                 print()
-                if clf == "NN":
-                    nn_model_ref.train_general(name_input)
-                elif clf == "LGBM":
-                    print("START CLASSIFY LGBM")
-                    print()
-                    best_params_ = {
-                        'objective': 'binary',
-                        'num_leaves': 50,
-                        'min_data_in_leaf': 10,
-                        'max_depth': 10,
-                        'max_bin': 50,
-                        'learning_rate': 0.01,
-                        'dart': False,
-                        'reg_alpha': 0.1,
-                        'reg_lambda': 0,
-                        'n_estimators': 1000,
-                        'bootstrap': True,
-                        'dart': False
-                    }
-                    final_model = lgb.LGBMClassifier(**best_params_, random_state=args.seed)
-                    #cv_score_best = cross_val_score(final_model, X_DDTpd, nn_model_ref.Y_train_nn_binaire, cv=5, verbose=6, scoring="accuracy")
-                    #print(cv_score_best.mean(), cv_score_best.std())
-                    final_model.fit(X_DDTpd, nn_model_ref.Y_train_nn_binaire)
-                    y_pred = final_model.predict(nn_model_ref.all_intermediaire_val)
-                    print(accuracy_score( nn_model_ref.Y_val_nn_binaire, y_pred))
-                    res = np.array([accuracy_score( nn_model_ref.Y_val_nn_binaire, y_pred)])
-                    print(res)
-                    np.save(path_save_model + "res_LGBM_" + str(cpt) + ".npy", res)
-                """elif clf == "RF":
-                    clf = RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1,random_state=args.seed)
-                    #cv_score_best = cross_val_score(clf, X_DDTpd, nn_model_ref.Y_train_nn_binaire, cv=5, verbose=6, scoring="accuracy")
-                    #print(cv_score_best.mean(), cv_score_best.std())
-                    clf.fit(X_DDTpd, nn_model_ref.Y_train_nn_binaire)
-                    y_pred = clf.predict(nn_model_ref.all_intermediaire_val)
-                    print(accuracy_score( nn_model_ref.Y_val_nn_binaire, y_pred.round()))
-    
-                    res = np.array([accuracy_score(nn_model_ref.Y_val_nn_binaire, y_pred)])
-                    print(res)
-                    np.save(path_save_model + "res_RF_" + str(cpt) + ".npy", res)
-                elif clf == "MLP":
-                    clf = SVC(kernel="linear", C=0.025,random_state=args.seed)
-                    # cv_score_best = cross_val_score(clf, X_DDTpd, nn_model_ref.Y_train_nn_binaire, cv=5, verbose=6, scoring="accuracy")
-                    # print(cv_score_best.mean(), cv_score_best.std())
-                    clf.fit(X_DDTpd, nn_model_ref.Y_train_nn_binaire)
-                    y_pred = clf.predict(nn_model_ref.all_intermediaire_val)
-                    print(accuracy_score(nn_model_ref.Y_val_nn_binaire, y_pred.round()))
-    
-                    res = np.array([accuracy_score(nn_model_ref.Y_val_nn_binaire, y_pred)])
-                    print(res)
-                    np.save(path_save_model + "res_MLP_" + str(cpt) + ".npy", res)"""
+                sys.exit(1)
+
+        if args.create_new_data_for_ToT and args.create_new_data_for_classifier:
+            del nn_model_ref.X_train_nn_binaire, nn_model_ref.X_val_nn_binaire, nn_model_ref.Y_train_nn_binaire, nn_model_ref.Y_val_nn_binaire
+            del nn_model_ref.c0l_train_nn, nn_model_ref.c0l_val_nn, nn_model_ref.c0r_train_nn, nn_model_ref.c0r_val_nn
+            del nn_model_ref.c1l_train_nn, nn_model_ref.c1l_val_nn, nn_model_ref.c1r_train_nn, nn_model_ref.c1r_val_nn
+
+
+        print("STEP 1 : DONE")
+        print("---" * 100)
+        if args.end_after_training:
+            sys.exit(1)
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 2 : GET MASKS")
+        print()
+        print("LOAD MASKS: "+ str(args.load_masks) +  " | RESEARCH NEW: " +  str(args.research_new_masks) + " | MODEL: " + str(args.liste_segmentation_prediction) +" " + str(args.liste_methode_extraction)+" " + str(args.liste_methode_selection)+" " + str(args.hamming_weigth)+" " + str(args.thr_value))
+        print()
+        get_masks_gen = Get_masks(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device)
+        if args.research_new_masks:
+            get_masks_gen.start_step()
+            get_masks_gen.save_masks(path_save_model)
+            del get_masks_gen.X_deltaout_train, get_masks_gen.X_eval, get_masks_gen.Y_tf, get_masks_gen.Y_eval
+
+
+        print("STEP 2 : DONE")
+        print("---" * 100)
+        if args.end_after_step2:
+            sys.exit(1)
+
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 3 : MAKE M-ODT")
+        print()
+        print("NEW DATA: "+ str(args.create_new_data_for_ToT) +  " | PURE ToT: " +  str(args.create_ToT_with_only_sample_from_cipher) )
+        print()
+
+        table_of_truth = ToT(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
+        table_of_truth.create_DDT()
+
+        del table_of_truth.c0l_create_ToT, table_of_truth.c0r_create_ToT
+        del table_of_truth.c1l_create_ToT, table_of_truth.c1r_create_ToT
+
+        print("STEP 3 : DONE")
+        print("---" * 100)
+        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+        print("STEP 4 : CREATE DATA PROBA AND CLASSIFY")
+        print()
+        print("NEW DATA: "+ str(args.create_new_data_for_classifier))
+        print()
+        generator_data = Genrator_data_prob_classifier(args, nn_model_ref.net, path_save_model, rng, creator_data_binary, device, get_masks_gen.masks, nn_model_ref)
+        generator_data.create_data_g(table_of_truth)
+        args.inputs_type = ["ctdata0l", "ctdata0r", "ctdata1l", "ctdata1r"]
+        nn_model_ref.load_nn()
+        #EVALUATE GOHR NN ON NEW DATASET
+        liste_inputs = creator_data_binary.convert_data_inputs(args, generator_data.c0l_create_proba_train, generator_data.c0r_create_proba_train, generator_data.c1l_create_proba_train, generator_data.c1r_create_proba_train)
+        nn_model_ref.X_train_nn_binaire = creator_data_binary.convert_to_binary(liste_inputs);
+        liste_inputs = creator_data_binary.convert_data_inputs(args, generator_data.c0l_create_proba_val, generator_data.c0r_create_proba_val, generator_data.c1l_create_proba_val, generator_data.c1r_create_proba_val)
+        nn_model_ref.X_val_nn_binaire = creator_data_binary.convert_to_binary(liste_inputs);
+        nn_model_ref.Y_train_nn_binaire = generator_data.Y_create_proba_train
+        nn_model_ref.Y_val_nn_binaire = generator_data.Y_create_proba_val
+        if args.eval_nn_ref:
+            nn_model_ref.eval_all(["train", "val"])
+        all_clfs = All_classifier(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth, cpt)
+        #all_clfs.X_train_proba = np.concatenate((all_clfs.X_train_proba, X_feat_temp), axis = 1)
+        #all_clfs.X_eval_proba =  np.concatenate((all_clfs.X_eval_proba, X_feat_temp_val), axis = 1)
+        all_clfs.classify_all()
+
+        if args.quality_of_masks:
+            qm = Quality_masks(args, path_save_model, generator_data, get_masks_gen, nn_model_ref, table_of_truth, all_clfs)
+            qm.start_all()
+        else:
+            qm = None
+
+
+        del all_clfs, nn_model_ref, creator_data_binary, generator_data, table_of_truth, get_masks_gen
+
+
+
