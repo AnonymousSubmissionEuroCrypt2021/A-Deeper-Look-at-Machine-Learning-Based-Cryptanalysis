@@ -43,13 +43,13 @@ parser.add_argument("--type_create_data", default=config.general.type_create_dat
 parser.add_argument("--retain_model_gohr_ref", default=config.train_nn.retain_model_gohr_ref, type=str2bool)
 parser.add_argument("--load_special", default=config.train_nn.load_special, type=str2bool)
 parser.add_argument("--finetunning", default=config.train_nn.finetunning, type=str2bool)
-parser.add_argument("--model_finetunne", default=config.train_nn.model_finetunne, choices=["baseline", "cnn_attention", "multihead", "deepset", "baseline_bin"])
+parser.add_argument("--model_finetunne", default=config.train_nn.model_finetunne, choices=["baseline_real", "baseline", "cnn_attention", "multihead", "deepset", "baseline_bin"])
 parser.add_argument("--load_nn_path", default=config.train_nn.load_nn_path)
 parser.add_argument("--countinuous_learning", default=config.train_nn.countinuous_learning, type=str2bool)
 parser.add_argument("--curriculum_learning", default=config.train_nn.curriculum_learning, type=str2bool)
 parser.add_argument("--nbre_epoch_per_stage", default=config.train_nn.nbre_epoch_per_stage, type=two_args_str_int)
 parser.add_argument("--a_bit", default=config.train_nn.a_bit, type=two_args_str_int)
-parser.add_argument("--type_model", default=config.train_nn.type_model, choices=["baseline", "cnn_attention", "multihead", "deepset", "baseline_bin", "baseline_bin_v2"])
+parser.add_argument("--type_model", default=config.train_nn.type_model, choices=["baseline_real", "baseline", "cnn_attention", "multihead", "deepset", "baseline_bin", "baseline_bin_v2"])
 parser.add_argument("--nbre_sample_train", default=config.train_nn.nbre_sample_train, type=two_args_str_int)
 parser.add_argument("--nbre_sample_eval", default=config.train_nn.nbre_sample_eval, type=two_args_str_int)
 parser.add_argument("--num_epochs", default=config.train_nn.num_epochs, type=two_args_str_int)
@@ -169,7 +169,7 @@ nn_model_ref = NN_Model_Ref(args, writer, device, rng, path_save_model, cipher, 
 
 
 nn_model_ref.load_nn()
-try:
+"""try:
     if args.finetunning:
         nn_model_ref.load_nn()
         nn_model_ref.train_from_scractch(name_input + "fine-tune")
@@ -181,7 +181,7 @@ except:
     print("NO MODEL AVALAIBLE FOR THIS CONFIG")
     print("CHANGE ARGUMENT retain_model_gohr_ref")
     print()
-    sys.exit(1)
+    sys.exit(1)"""
 
 
 

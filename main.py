@@ -46,7 +46,7 @@ parser.add_argument("--countinuous_learning", default=config.train_nn.countinuou
 parser.add_argument("--curriculum_learning", default=config.train_nn.curriculum_learning, type=str2bool)
 parser.add_argument("--nbre_epoch_per_stage", default=config.train_nn.nbre_epoch_per_stage, type=two_args_str_int)
 parser.add_argument("--a_bit", default=config.train_nn.a_bit, type=two_args_str_int)
-parser.add_argument("--type_model", default=config.train_nn.type_model, choices=["baseline", "cnn_attention", "multihead", "deepset", "baseline_bin", "baseline_bin_v2"])
+parser.add_argument("--type_model", default=config.train_nn.type_model, choices=["baseline_real", "baseline", "cnn_attention", "multihead", "deepset", "baseline_bin", "baseline_bin_v2"])
 parser.add_argument("--nbre_sample_train", default=config.train_nn.nbre_sample_train, type=two_args_str_int)
 parser.add_argument("--nbre_sample_eval", default=config.train_nn.nbre_sample_eval, type=two_args_str_int)
 parser.add_argument("--num_epochs", default=config.train_nn.num_epochs, type=two_args_str_int)
