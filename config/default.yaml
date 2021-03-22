@@ -128,7 +128,7 @@ make_ToT:
 make_data_classifier:
   create_new_data_for_classifier: Yes
   nbre_sample_train_classifier: 1000000
-  nbre_sample_val_classifier: 100000
+  nbre_sample_val_classifier: 10000
 
 compare_classifer:
   eval_nn_ref: Yes
