@@ -193,6 +193,8 @@ class All_classifier:
 
         print(y_pred)
 
+        np.savetxt("Predictions", y_pred)
+
         print()
         self.save_logs(self.path_save_model + "logs_lgbm_" + str(len(features)) + ".txt", y_pred, self.Y_eval_proba)
         print()
