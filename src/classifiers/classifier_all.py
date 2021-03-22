@@ -31,8 +31,8 @@ class All_classifier:
         self.Y_train_proba = generator_data.Y_create_proba_train
         self.X_eval_proba = generator_data.X_proba_val
         self.Y_eval_proba = generator_data.Y_create_proba_val
-        X_t_df = pd.DataFrame(self.X_train_proba, columns=self.table_of_truth.features_name)
-        X_v_df = pd.DataFrame(self.X_eval_proba, columns=self.table_of_truth.features_name)
+        #X_t_df = pd.DataFrame(self.X_train_proba, columns=self.table_of_truth.features_name)
+        #X_v_df = pd.DataFrame(self.X_eval_proba, columns=self.table_of_truth.features_name)
         Y_t_df = pd.DataFrame(self.Y_train_proba, columns=["Label"])
         Y_v_df = pd.DataFrame(self.Y_eval_proba, columns=["Label"])
         if self.args.save_data_proba:
@@ -173,31 +173,37 @@ class All_classifier:
         #cv_score_best = cross_val_score(final_model, X_DDTpd, self.Y_train_proba, cv=5, verbose=6)
         #print(cv_score_best.mean(), cv_score_best.std())
 
+        import joblib
+
+        if self.args.load_model_lgbm:
+            del final_model
+            final_model = joblib.load('lgb.pkl')
+        else:
+            final_model.fit(X_DDTpd, self.Y_train_proba)
+            joblib.dump(final_model, 'lgb.pkl')
 
 
 
-        final_model.fit(X_DDTpd, self.Y_train_proba)
-
-
-
-        self.plot_feat_importance(final_model, features,
-                                  self.path_save_model + "features_importances_LGBM_nbrefeat_"+str(len(features))+".png")
+        #self.plot_feat_importance(final_model, features,
+        #                          self.path_save_model + "features_importances_LGBM_nbrefeat_"+str(len(features))+".png")
         y_pred = final_model.predict(X_eval)
 
         #print(self.nn_model_ref.outputs_pred_val[:,0].shape, y_pred.shape)
         #print(self.nn_model_ref.outputs_pred_val[:,0], y_pred)
 
+        print(y_pred)
+
         print()
         self.save_logs(self.path_save_model + "logs_lgbm_" + str(len(features)) + ".txt", y_pred, self.Y_eval_proba)
         print()
 
-        same_output = self.nn_model_ref.outputs_pred_val[:,0] == y_pred
+        #same_output = self.nn_model_ref.outputs_pred_val[:,0] == y_pred
 
         #print(same_output)
 
 
 
-        p2 = 100 * np.sum(same_output) / len(same_output)
+        """p2 = 100 * np.sum(same_output) / len(same_output)
         print()
         print()
         print("MATCHING PROPORTION: " + str(p2)+ " %")
@@ -227,18 +233,18 @@ class All_classifier:
             file.write("\n")
         if self.masks_infos_score is None:
             self.masks_infos_score = self.importances.copy()
-            self.masks_infos_rank = np.array([np.where(self.indices==x)[0][0] for x in range(len(self.importances))])
+            self.masks_infos_rank = np.array([np.where(self.indices==x)[0][0] for x in range(len(self.importances))])"""
         return final_model
 
 
 
     def classifier_lgbm(self):
-        X_DDTpd = pd.DataFrame(data=self.X_train_proba, columns=self.table_of_truth.features_name)
+        X_DDTpd = pd.DataFrame(data=self.X_train_proba)#, columns=self.table_of_truth.features_name)
         clf = self.classifier_lgbm_general(X_DDTpd, self.X_eval_proba, self.table_of_truth.features_name)
         return clf
 
     def classifier_lr(self):
-        X_DDTpd = pd.DataFrame(data=self.X_train_proba, columns=self.table_of_truth.features_name)
+        X_DDTpd = pd.DataFrame(data=self.X_train_proba)#, columns=self.table_of_truth.features_name)
         clf = SVC(kernel="linear", C=0.025,random_state=self.args.seed)
         clf.fit(X_DDTpd, self.Y_train_proba)
         y_pred = clf.predict(self.X_eval_proba)
@@ -297,7 +303,7 @@ class All_classifier:
 
 
     def classifier_RF(self):
-        X_DDTpd = pd.DataFrame(data=self.X_train_proba, columns=self.table_of_truth.features_name)
+        X_DDTpd = pd.DataFrame(data=self.X_train_proba)#, columns=self.table_of_truth.features_name)
         clf = self.classifier_RF_general(X_DDTpd, self.X_eval_proba, self.table_of_truth.features_name)
         return clf
 

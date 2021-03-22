@@ -19,6 +19,15 @@ class Genrator_data_prob_classifier:
         self.features_name = []
         if self.args.create_new_data_for_classifier:
             self.create_data_bin()
+
+            if self.args.load_data:
+                self.c0l_create_proba_val = np.loadtxt(self.args.path_to_test + "c0l_create_proba_val.txt").astype('int32')[:100]
+                self.c0r_create_proba_val = np.loadtxt(self.args.path_to_test + "c0r_create_proba_val.txt").astype('int32')[:100]
+                self.c1l_create_proba_val = np.loadtxt(self.args.path_to_test + "c1l_create_proba_val.txt").astype('int32')[:100]
+                self.c1r_create_proba_val = np.loadtxt(self.args.path_to_test + "c1r_create_proba_val.txt").astype('int32')[:100]
+                self.Y_create_proba_val = np.loadtxt(self.args.path_to_test +"Y_create_proba_val.txt").astype('int32')[:100]
+
+
         else:
 
             self.c0l_create_proba_train = nn_model_ref.c0l_train_nn
