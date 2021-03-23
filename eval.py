@@ -207,7 +207,7 @@ if args.end_after_step2:
     sys.exit(1)
 
 #--------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-print("STEP 3 : MAKE TABLE OF TRUTH")
+print("STEP 3 : MAKE M-ODT")
 print()
 print("NEW DATA: "+ str(args.create_new_data_for_ToT) +  " | PURE ToT: " +  str(args.create_ToT_with_only_sample_from_cipher) )
 print()
